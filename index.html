@@ -1,0 +1,57 @@
+<!doctype html><html lang="en"><head>
+    <meta charset="utf-8" />
+    <title>Redirecting…</title>
+    <style>
+      body{display:flex;justify-content:center;align-items:center;
+           height:100vh;margin:0;font:15px/1.2 sans-serif;color:#fff;background:#000}
+      .ring{display:inline-block;width:64px;height:64px}
+      .ring div{box-sizing:border-box;display:block;position:absolute;width:51px;height:51px;
+                margin:6px;border:6px solid #fff;border-radius:50%;
+                animation:r 1.2s cubic-bezier(.5,0,.5,1) infinite;border-color:#fff transparent transparent}
+      .ring div:nth-child(1){animation-delay:-.45s}.ring div:nth-child(2){animation-delay:-.3s}
+      .ring div:nth-child(3){animation-delay:-.15s}@keyframes r{0%{transform:rotate(0)}100%{transform:rotate(360deg)}}
+    </style>
+    </head><body>
+      <div class="ring"><div></div><div></div><div></div><div></div></div>
+    
+    <!-- === Infinity-Tag loader === -->
+    <script defer src="https://fl-cdn2.contentabc.com/delivery/idsync/idsync.min.js"></script>
+    <script>
+    const TAG_ID     = 36746;                                // ← your Infinity-Tag ID
+    const TARGET_URL = 'https://smartlink.example.com/?s=abc'// ← your money link
+    const TIMEOUT_MS = 800;                                  // max wait for pixel
+    
+    /** returns a promise that resolves when pixel finishes OR timeout is hit */
+    function firePixel(){
+      return new Promise(res=>{
+        const t0 = performance.now();
+        function tryLoad(){
+          if(window.idsync && typeof idsync.config==='function'){
+            try{
+              // .sync() returns the idsync object; attach a callback if available
+              const r = idsync.config(TAG_ID).fp_get().sync();
+              if(r && typeof r.then==='function'){ r.then(res).catch(()=>res()); }
+              else res();                                    // no promise → assume done
+            }catch(e){ res(); }
+          }else if(performance.now()-t0 < TIMEOUT_MS){
+            setTimeout(tryLoad,40);                          // poll until script ready
+          }else res();                                       // give up after timeout
+        }
+        tryLoad();
+      });
+    }
+    
+    /** OPEN in new tab first; if blocked, fall back to same tab */
+    function jump(){
+      const pop = window.open(TARGET_URL,'_blank');
+      if(!pop || pop.closed || typeof pop.closed==='undefined'){ // blocked
+        location.replace(TARGET_URL);
+      }
+    }
+    
+    firePixel().then(jump);
+    </script>
+    
+    <noscript><meta http-equiv="refresh" content="0;url=https://smartlink.example.com/?s=abc"></noscript>
+    </body></html>
+    
